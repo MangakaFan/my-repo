@@ -3,6 +3,11 @@ var apply = function(args) {
 	return args[0](args[1]);
 };
 
+var f = function(args) {return args[0]+args[1];};
+var r = apply([f,[2,3]]);
+document.write(r);
+
+/*
 // apply to all
 var aa = function(f) {
 	return function(args) {
@@ -86,3 +91,4 @@ var trans = function(args) {
 		a.push(b);
 	}			
 };
+*/
