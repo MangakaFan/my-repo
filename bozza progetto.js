@@ -39,6 +39,21 @@ var bezierDetails = function (controlpoints, heigths) {
   return STRUCT([pointsStruct,curve]);
 };
 
+var drawCoordinate = function() {
+  var polylines = new Array();
+
+  for (var i = 0; i < 31; i++) {
+    polylines.push(COLOR([1,0,0])(POLYLINE([[0.5*i,0,0],[0.5*i,15,0]])));
+    polylines.push(COLOR([1,0,0])(POLYLINE([[0,0.5*i,0],[15,0.5*i,0]])));
+    polylines.push(COLOR([0,1,0])(POLYLINE([[0,0,0.5*i],[0,15,0.5*i]])));
+    polylines.push(COLOR([0,1,0])(POLYLINE([[0,0.5*i,0],[0,0.5*i,15]])));
+    polylines.push(COLOR([0,0,1])(POLYLINE([[0,0,0.5*i],[15,0,0.5*i]])));
+    polylines.push(COLOR([0,0,1])(POLYLINE([[0.5*i,0,0],[0.5*i,0,15]])));
+  }
+
+  DRAW(STRUCT(polylines));
+}
+
 var myBezier = function(controlpoints, heigth) { 
   var points = [];
 
@@ -52,11 +67,21 @@ var myBezier = function(controlpoints, heigth) {
 var bezierCurves = function(controls, heigths) {
   var domain = INTERVALS(1)(30);
   var curves = new Array();
+  var h = heigths || 0;
 
-  for (var i = 0; i < controls.length; i++) {
-    var curvefun = myBezier(controls[i],heigths[i]);
-    var curve = MAP(curvefun)(domain);
-    curves.push(curve);
+  if (h != 0) {
+    for (var i = 0; i < controls.length; i++) {
+      var curvefun = myBezier(controls[i],heigths[i]);
+      var curve = MAP(curvefun)(domain);
+      curves.push(curve);
+    }
+  }
+  else {
+    for (var i = 0; i < controls.length; i++) {
+      var curvefun = BEZIER(S0)(controls[i]);
+      var curve = MAP(curvefun)(domain);
+      curves.push(curve);
+    }
   }
 
   return STRUCT(curves);
@@ -68,10 +93,18 @@ var coloreDisco = [200/255,190/255,230/255];
 var bezierSurface = function(controls, heigths) {
   var domain = DOMAIN([[0,1],[0,1]])([30,30]);
   var curvefuns = new Array();
-
-  for (var i = 0; i < controls.length; i++) {
-    var curvefun = myBezier(controls[i],heigths[i]);
-    curvefuns.push(curvefun);
+  var h = heigths || 0;
+  if (h != 0) {
+    for (var i = 0; i < controls.length; i++) {
+      var curvefun = myBezier(controls[i],heigths[i]);
+      curvefuns.push(curvefun);
+    }
+  }
+  else {
+    for (var i = 0; i < controls.length; i++) {
+      var curvefun = BEZIER(S0)(controls[i]);
+      curvefuns.push(curvefun);
+    }
   }
 
   var surface = BEZIER(S1)(curvefuns);
@@ -161,11 +194,55 @@ var Disco = function() {
   return COLOR(coloreDisco)(STRUCT([surf,specsurf]));
 }
 
+var FaccettaSuperiore = function() {
+  var controls1 = [
+    [[4,12,6.5],[4,12.4,6.5],[3.5,14,5.75],[3,12,4],[3.5,10,5.75],[4,11.6,6.5],[4,12,6.5]],
+    [[4.25,12,6.25],[4.25,12.4,6.25],[3.75,14,5.5],[3.25,12,3.75],[3.75,10,5.5],[4.25,11.6,6.25],[4.25,12,6.25]],
+    [[4.5,10,6],[6,10.5,5],[4.5,11,2.5],[3.5,10.5,5],[4.5,10,6]],
+    [[4.5,9,5],[6,9,4],[4.5,9,0.5],[3.5,9,4],[4.5,9,5]],
+    [[4.5,8,4],[6,8,3],[4.5,8,-0.5],[3.5,8,3],[4.5,8,4]]
+  ];
+  var surf1 = COLOR(coloreOssa)(bezierSurface(controls1));
+
+  var controls2 = [
+    [[4,12,6.5],[4,12.4,6.5],[3.5,14,5.75],[3,12,4],[3.5,10,5.75],[4,11.6,6.5],[4,12,6.5]],
+    [[3.9,12,6.6],[3.9,12.4,6.6],[3.4,14,5.76],[2.9,12,4.1],[3.4,10,5.85],[3.9,11.6,6.6],[3.9,12,6.6]]
+  ];
+  var surf2 = COLOR(coloreDisco)(bezierSurface(controls2));
+
+  var controls3 = [
+    [[3.75,12,6]],
+    [[3.9,12,6.6],[3.9,12.4,6.6],[3.4,14,5.76],[2.9,12,4.1],[3.4,10,5.85],[3.9,11.6,6.6],[3.9,12,6.6]]
+  ];
+  var surf3 = COLOR(coloreDisco)(bezierSurface(controls3));
+
+  var surf = STRUCT([surf1,surf2,surf3]);
+  var specsurf = S([0])([-1])(surf);
+
+  return STRUCT([surf,specsurf]);
+}
+
+var FaccettaInferiore = function() {
+  var controls1 = [
+    [[3.9,12,0.1],[3.9,12.4,0.1],[3.4,14,-0.65],[2.9,12,-2.4],[3.4,10,-0.65],[3.9,11.6,0.1],[3.9,12,0.1]]
+  ];
+  var surf1 = bezierSurface(controls1);
+  var surf2 = bezierCurves(controls1);
+
+  var surf = STRUCT([surf1,surf2]);
+  var specsurf = S([0])([-1])(surf);
+
+  return COLOR([1,0,0])(STRUCT([surf,specsurf]));
+}
+
+drawCoordinate();
 
 var corpo = new CorpoVertebrale();
 var proc = T([1,2])([15.5,-1.5])(R([1,2])([PI/2])(new ProcessoSpinoso()));
+var facsup = new FaccettaSuperiore();
+var facinf = new FaccettaInferiore();
 
-var vertebra1 = STRUCT([corpo,proc]);
+var vertebra1 = STRUCT([corpo,proc,facsup,facinf]);
 var disco1 =  T([2])([5])(new Disco());
 var vertebra2 = T([2])([6.5])(vertebra1);
 var disco2 = T([2])([6.5])(disco1);
@@ -175,17 +252,6 @@ DRAW(model);
 
 
 /*
-var model = STRUCT([new ProcessoSpinoso()]);
+var model = STRUCT([new LaminaVertebrale()]);
 DRAW(model);
-*/
-
-/*
-
-    [[0,0],[0.4,0],[2,0.5],[-1,1],[1,1.5],[0.4,2],[0,2],[-0.4,2],[-1,1.5],[1,1],[-1,0.5],[-0.4,0],[0,0]],
-    [[0,0],[0.4,0],[2,0.5],[-1,1],[1,1.5],[0.4,2],[0,2],[-0.4,2],[-1,1.5],[1,1],[-1,0.5],[-0.4,0],[0,0]],
-    [[0.8,0.1],[2.4,0.1],[3.6,0.6],[-0.2,1.1],[1.8,1.6],[1.2,2.1],[0.8,2.1],[0.4,2.1],[0.2,1.6],[1.8,1.1],[0.2,0.6],[0.4,0.1],[0.8,0.1]],
-    [[1.6,0.2],[2,0.2],[2.6,0.7],[0.6,1.2],[2.6,1.7],[2,2.2],[1.6,2.2],[1.2,2.2],[1,1.7],[2.6,1.2],[1,0.7],[2,0.2],[1.6,0.2]],
-    [[2.4,0.3],[2.8,0.3],[3.4,0.8],[1.4,1.3],[3.4,1.8],[2.8,2.3],[2.4,2.3],[2,2.3],[1.8,1.8],[3.4,1.3],[1.8,0.8],[2.8,0.3],[2.4,0.3]],
-    [[3.2,0.4],[3.6,0.4],[4.2,0.9],[2.2,1.4],[6,1.9],[5.5,2.4],[3.2,2.4],[2.8,2.4],[2.6,1.9],[4.2,1.4],[2.6,0.9],[3.6,0.4],[3.2,0.4]],
-    [[4,0.5],[4.4,0.5],[5,1],[3,1.5],[5,1],[7,2.5],[6,2.5],[3.6,2.5],[3.4,1],[5,1.5],[3.4,1],[3.6,0.5],[4,0.5]],
 */
